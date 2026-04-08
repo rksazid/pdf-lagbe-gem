@@ -18,6 +18,14 @@ module PdfLagbe
       @html_to_pdf ||= Resources::HtmlToPdf.new(self)
     end
 
+    def markdown_to_pdf
+      @markdown_to_pdf ||= Resources::MarkdownToPdf.new(self)
+    end
+
+    def docx_to_pdf
+      @docx_to_pdf ||= Resources::DocxToPdf.new(self)
+    end
+
     def health
       @health ||= Resources::Health.new(self)
     end

@@ -32,6 +32,30 @@ RSpec.describe PdfLagbe::Client do
     end
   end
 
+  describe '#markdown_to_pdf' do
+    it 'returns a MarkdownToPdf resource' do
+      client = described_class.new
+      expect(client.markdown_to_pdf).to be_a(PdfLagbe::Resources::MarkdownToPdf)
+    end
+
+    it 'memoizes the resource' do
+      client = described_class.new
+      expect(client.markdown_to_pdf).to be(client.markdown_to_pdf)
+    end
+  end
+
+  describe '#docx_to_pdf' do
+    it 'returns a DocxToPdf resource' do
+      client = described_class.new
+      expect(client.docx_to_pdf).to be_a(PdfLagbe::Resources::DocxToPdf)
+    end
+
+    it 'memoizes the resource' do
+      client = described_class.new
+      expect(client.docx_to_pdf).to be(client.docx_to_pdf)
+    end
+  end
+
   describe '#health' do
     it 'returns a Health resource' do
       client = described_class.new

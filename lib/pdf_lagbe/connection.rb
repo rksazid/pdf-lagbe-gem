@@ -10,6 +10,7 @@ module PdfLagbe
 
     def build_connection
       Faraday.new(url: config.base_url) do |f|
+        f.request :multipart
         f.request :json
         f.request :retry,
                   max: config.max_retries,

@@ -1,8 +1,8 @@
 # PdfLagbe
 
-A professional Ruby gem for converting HTML to PDF using the [pdf-lagbe](https://github.com/rksazid/pdf-lagbe) API service.
+A professional Ruby gem for converting HTML, Markdown, and DOCX to PDF using the [pdf-lagbe](https://github.com/rksazid/pdf-lagbe) API service.
 
-Supports full page configuration, custom headers/footers, JavaScript rendering, and is designed with an extensible architecture for future conversion types (DOCX, images, and more).
+Supports full page configuration, custom headers/footers, JavaScript rendering, GitHub Flavored Markdown, DOCX file uploads, and is designed with an extensible architecture for adding more conversion types.
 
 ## Installation
 
@@ -34,16 +34,16 @@ PdfLagbe.configure do |config|
   config.base_url = "https://pdf-lagbe.vercel.app"
 end
 
-# Convert HTML to PDF
 client = PdfLagbe.client
-result = client.html_to_pdf.convert(html: "<h1>Hello World</h1>")
 
-# Save to file
-result.save("output.pdf")
+# HTML to PDF
+client.html_to_pdf.convert(html: "<h1>Hello</h1>").save("hello.pdf")
 
-puts result.pdf?             # => true
-puts result.size             # => 12345
-puts result.generation_time  # => "150ms"
+# Markdown to PDF
+client.markdown_to_pdf.convert(markdown: "# Hello World").save("hello.pdf")
+
+# DOCX to PDF
+client.docx_to_pdf.convert(file_path: "document.docx").save("document.pdf")
 ```
 
 ## Configuration
@@ -81,9 +81,11 @@ staging.html_to_pdf.convert(html: "<p>Test</p>")
 production.html_to_pdf.convert(html: "<p>Production</p>")
 ```
 
-## HTML to PDF Conversion
+## HTML to PDF
 
-### Basic Conversion
+Converts HTML content (with full CSS/JS rendering) to PDF.
+
+### Basic Usage
 
 ```ruby
 client = PdfLagbe.client
@@ -137,7 +139,7 @@ result = client.html_to_pdf.convert_to_file(
 )
 ```
 
-### Parameters Reference
+### HTML Parameters Reference
 
 | Parameter | Type | Description |
 |---|---|---|
@@ -154,9 +156,121 @@ result = client.html_to_pdf.convert_to_file(
 | `waitForSelector` | String | CSS selector to wait for before rendering |
 | `waitForTimeout` | Integer | Additional wait in ms (0-5000) |
 
+## Markdown to PDF
+
+Converts GitHub Flavored Markdown (tables, task lists, code syntax highlighting, strikethrough) to PDF.
+
+### Basic Usage
+
+```ruby
+client = PdfLagbe.client
+
+result = client.markdown_to_pdf.convert(markdown: "# My Document\n\nHello **world**!")
+result.save("document.pdf")
+```
+
+### With Options
+
+```ruby
+result = client.markdown_to_pdf.convert(
+  markdown: <<~MD,
+    # Quarterly Report
+
+    ## Summary
+    | Metric | Q1 | Q2 |
+    |--------|-----|-----|
+    | Revenue | $1M | $1.5M |
+
+    ## Tasks
+    - [x] Complete analysis
+    - [ ] Send to stakeholders
+
+    ```ruby
+    puts "Code blocks with syntax highlighting!"
+    ```
+  MD
+  format: "A4",
+  landscape: false,
+  margin: { top: "20mm", bottom: "20mm", left: "15mm", right: "15mm" },
+  printBackground: true
+)
+
+result.save("report.pdf")
+```
+
+### Save Directly to File
+
+```ruby
+client.markdown_to_pdf.convert_to_file(
+  markdown: "# Hello World",
+  output_path: "hello.pdf",
+  format: "Letter"
+)
+```
+
+### Markdown Parameters Reference
+
+| Parameter | Type | Description |
+|---|---|---|
+| `markdown` | String | **Required.** Markdown content (max 2 MB) |
+| `format` | String | Page size: `A4`, `Letter`, `A3`, `Legal`, `Tabloid` |
+| `landscape` | Boolean | Landscape orientation |
+| `margin` | Hash | `{ top:, right:, bottom:, left: }` — CSS units |
+| `printBackground` | Boolean | Include background colors/images |
+| `scale` | Float | Scale factor (0.1 to 2.0) |
+| `displayHeaderFooter` | Boolean | Show header and footer |
+| `headerTemplate` | String | Header HTML (max 10 KB) |
+| `footerTemplate` | String | Footer HTML (max 10 KB) |
+| `preferCSSPageSize` | Boolean | Use `@page` CSS sizing |
+| `waitForSelector` | String | CSS selector to wait for before rendering |
+| `waitForTimeout` | Integer | Additional wait in ms (0-5000) |
+
+## DOCX to PDF
+
+Converts Microsoft Word `.docx` files to PDF via multipart file upload.
+
+### Basic Usage
+
+```ruby
+client = PdfLagbe.client
+
+result = client.docx_to_pdf.convert(file_path: "report.docx")
+result.save("report.pdf")
+```
+
+### With Options
+
+```ruby
+result = client.docx_to_pdf.convert(
+  file_path: "report.docx",
+  format: "Letter",
+  landscape: true
+)
+
+result.save("report.pdf")
+```
+
+### Save Directly to File
+
+```ruby
+client.docx_to_pdf.convert_to_file(
+  file_path: "input.docx",
+  output_path: "output.pdf",
+  format: "A4"
+)
+```
+
+### DOCX Parameters Reference
+
+| Parameter | Type | Description |
+|---|---|---|
+| `file_path` | String | **Required.** Path to `.docx` file (max 5 MB) |
+| `format` | String | Page size: `A4`, `Letter`, `A3`, `Legal`, `Tabloid` |
+| `landscape` | Boolean | Landscape orientation |
+
 ## Response Object
 
-The `convert` method returns a `PdfLagbe::Response`:
+All `convert` methods return a `PdfLagbe::Response`:
 
 ```ruby
 result = client.html_to_pdf.convert(html: "<p>Hello</p>")
@@ -196,7 +310,7 @@ rescue PdfLagbe::BadRequestError => e
   # 400 — Validation failure
   puts e.message
 rescue PdfLagbe::PayloadTooLargeError => e
-  # 413 — HTML exceeds 2 MB
+  # 413 — Content exceeds size limit
   puts e.message
 rescue PdfLagbe::RateLimitError => e
   # 429 — Too many requests
@@ -239,8 +353,10 @@ All errors expose:
 Client-side validation raises `ArgumentError` before making the request:
 
 ```ruby
-client.html_to_pdf.convert(html: "")           # => ArgumentError: html is required
-client.html_to_pdf.convert(html: "x", scale: 5) # => ArgumentError: scale must be between 0.1 and 2.0
+client.html_to_pdf.convert(html: "")              # => ArgumentError: html is required
+client.html_to_pdf.convert(html: "x", scale: 5)   # => ArgumentError: scale must be between 0.1 and 2.0
+client.markdown_to_pdf.convert(markdown: "")       # => ArgumentError: markdown is required
+client.docx_to_pdf.convert(file_path: "test.txt")  # => ArgumentError: file must be a .docx file
 ```
 
 ## Rails Integration
@@ -274,21 +390,49 @@ class InvoicesController < ApplicationController
 end
 ```
 
+```ruby
+# app/controllers/reports_controller.rb
+class ReportsController < ApplicationController
+  def export_markdown
+    markdown = File.read(Rails.root.join("docs", "report.md"))
+    result = PdfLagbe.client.markdown_to_pdf.convert(
+      markdown: markdown,
+      format: "A4",
+      printBackground: true
+    )
+
+    send_data result.body,
+              filename: "report.pdf",
+              type: "application/pdf"
+  end
+
+  def export_docx
+    result = PdfLagbe.client.docx_to_pdf.convert(
+      file_path: params[:file].tempfile.path
+    )
+
+    send_data result.body,
+              filename: "converted.pdf",
+              type: "application/pdf"
+  end
+end
+```
+
 ## Extending for Future Endpoints
 
-The gem is designed to be easily extended. Adding a new conversion type (e.g., DOCX to PDF) requires only 3 steps:
+The gem uses a resource-based architecture. Adding a new conversion type requires only 3 steps:
 
 **1. Create a new resource:**
 
 ```ruby
-# lib/pdf_lagbe/resources/docx_to_pdf.rb
+# lib/pdf_lagbe/resources/image_to_pdf.rb
 module PdfLagbe
   module Resources
-    class DocxToPdf < Base
-      ENDPOINT = "/api/v1/docx-to-pdf"
+    class ImageToPdf < Base
+      ENDPOINT = "/api/v1/image-to-pdf"
 
       def convert(file_path:, **options)
-        # Implementation for file upload conversion
+        # Implementation here
       end
     end
   end
@@ -299,15 +443,15 @@ end
 
 ```ruby
 # In lib/pdf_lagbe/client.rb
-def docx_to_pdf
-  @docx_to_pdf ||= Resources::DocxToPdf.new(self)
+def image_to_pdf
+  @image_to_pdf ||= Resources::ImageToPdf.new(self)
 end
 ```
 
-**3. Require it in the main module and use:**
+**3. Require it in `lib/pdf_lagbe.rb` and use:**
 
 ```ruby
-client.docx_to_pdf.convert(file_path: "document.docx")
+client.image_to_pdf.convert(file_path: "photo.png")
 ```
 
 ## Development

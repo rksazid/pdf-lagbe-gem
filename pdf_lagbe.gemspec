@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.email         = ['rksazid@gmail.com']
 
   spec.summary       = 'Ruby client for the pdf-lagbe PDF generation API'
-  spec.description   = 'A professional Ruby gem for converting HTML to PDF using the pdf-lagbe API service. ' \
-                       'Supports full page configuration, custom headers/footers, and is extensible for ' \
-                       'future conversion types (DOCX, images, and more).'
+  spec.description   = 'A professional Ruby gem for converting HTML, Markdown, and DOCX to PDF using the ' \
+                       'pdf-lagbe API service. Supports full page configuration, custom headers/footers, ' \
+                       'and is designed with an extensible architecture for future conversion types.'
   spec.homepage      = 'https://github.com/rksazid/pdf-lagbe-gem'
   spec.license       = 'MIT'
 
@@ -34,5 +34,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'faraday', '>= 2.0', '< 3.0'
+  spec.add_dependency 'faraday-multipart', '~> 1.0'
   spec.add_dependency 'faraday-retry', '~> 2.0'
 end

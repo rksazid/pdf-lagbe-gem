@@ -8,7 +8,7 @@ RSpec.describe PdfLagbe::Resources::HtmlToPdf do
 
   describe '#convert' do
     before do
-      stubs.post('/api/v1/pdf') { [200, pdf_headers, pdf_binary] }
+      stubs.post('/api/v1/html-to-pdf') { [200, pdf_headers, pdf_binary] }
     end
 
     it 'returns a Response with PDF body' do
@@ -27,7 +27,7 @@ RSpec.describe PdfLagbe::Resources::HtmlToPdf do
     it 'passes options in the request body' do
       stubs.instance_variable_get(:@stack).clear # clear the before stub
 
-      stubs.post('/api/v1/pdf') do |env|
+      stubs.post('/api/v1/html-to-pdf') do |env|
         body = JSON.parse(env.body)
         expect(body['format']).to eq('A4')
         expect(body['landscape']).to be(true)
@@ -40,7 +40,7 @@ RSpec.describe PdfLagbe::Resources::HtmlToPdf do
 
   describe '#convert_to_file' do
     it 'saves PDF to a file and returns the response' do
-      stubs.post('/api/v1/pdf') { [200, pdf_headers, pdf_binary] }
+      stubs.post('/api/v1/html-to-pdf') { [200, pdf_headers, pdf_binary] }
 
       path = File.join(Dir.tmpdir, 'test_convert.pdf')
       result = client.html_to_pdf.convert_to_file(html: '<p>Hi</p>', output_path: path)
@@ -91,7 +91,7 @@ RSpec.describe PdfLagbe::Resources::HtmlToPdf do
     end
 
     it 'accepts valid options without error' do
-      stubs.post('/api/v1/pdf') { [200, pdf_headers, pdf_binary] }
+      stubs.post('/api/v1/html-to-pdf') { [200, pdf_headers, pdf_binary] }
 
       expect do
         client.html_to_pdf.convert(

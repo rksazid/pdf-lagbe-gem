@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'faraday'
+require 'faraday/multipart'
 require 'faraday/retry'
 require 'json'
 
@@ -11,7 +12,10 @@ require_relative 'pdf_lagbe/middleware/raise_error'
 require_relative 'pdf_lagbe/connection'
 require_relative 'pdf_lagbe/response'
 require_relative 'pdf_lagbe/resources/base'
+require_relative 'pdf_lagbe/resources/pdf_options'
 require_relative 'pdf_lagbe/resources/html_to_pdf'
+require_relative 'pdf_lagbe/resources/markdown_to_pdf'
+require_relative 'pdf_lagbe/resources/docx_to_pdf'
 require_relative 'pdf_lagbe/resources/health'
 require_relative 'pdf_lagbe/resources/info'
 require_relative 'pdf_lagbe/client'
